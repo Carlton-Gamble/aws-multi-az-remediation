@@ -1,0 +1,12 @@
+# Local .terraform folder containing binary plugins
+.terraform/
+
+# Local state files and crash logs
+*.tfstate
+*.tfstate.backup
+crash.log
+crash.*.log
+
+# Sensitive variable files containing credentials
+*.tfvars
+*.tfvars.json
