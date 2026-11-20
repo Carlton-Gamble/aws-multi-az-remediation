@@ -1,6 +1,3 @@
-#Left off here
-#look for nat.tf sec
-
 data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
@@ -13,20 +10,13 @@ data "aws_ami" "amazon_linux_2023" {
 
 resource "aws_security_group" "nat_sg" {
   name        = "nat-instance-sg"
-  description = "Allow inbound web traffic from private subnets for NAT outbound routing"
+  description = "Allow inbound traffic from private subnets for NAT outbound routing"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = [var.vpc_cidr]
   }
 
@@ -49,14 +39,19 @@ resource "aws_instance" "nat" {
   vpc_security_group_ids      = [aws_security_group.nat_sg.id]
   associate_public_ip_address = true
   source_dest_check           = false
+  user_data_replace_on_change = true
 
   user_data = <<-EOF
-		#!/bin/bash
-		echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
-		sysctl -p /etc/sysctl.conf
-		IFACE=$(ip route | grep default | awk '{print $5}')
-		iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
-		EOF
+              #!/bin/bash
+              dnf install -y nftables
+              sysctl -w net.ipv4.ip_forward=1
+              echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/99-nat.conf
+              IFACE=$(ip route | grep default | awk '{print $5}')
+              nft add table ip nat
+              nft 'add chain ip nat postrouting { type nat hook postrouting priority 100 ; }'
+              nft add rule ip nat postrouting oifname "$IFACE" masquerade
+              EOF
+
   tags = {
     Name = "custom-nat-instance"
   }

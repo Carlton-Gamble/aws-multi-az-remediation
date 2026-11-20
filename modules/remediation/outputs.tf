@@ -1,7 +1,3 @@
-output "guardduty_detector_id" {
-  value = aws_guardduty_detector.gd.id
-}
-
 output "quarantine_security_group_id" {
   description = "ID of the Quarantine Security Group"
   value       = aws_security_group.quarantine_sg.id

@@ -9,4 +9,6 @@ crash.*.log
 
 # Sensitive variable files containing credentials
 *.tfvars
-*.tfvars.json
+*.tfvars.json*.tfstate.*
+.terraform.tfstate.lock.info
+event.json
